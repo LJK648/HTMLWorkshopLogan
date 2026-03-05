@@ -69,6 +69,17 @@ body {
     text-align: center;
 }
 
+/* make layout fill viewport so footer sits at bottom */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
 .footer a {
     color: white;
     text-decoration: none;
@@ -81,4 +92,78 @@ body {
 
 .footer p {
     margin: 5px 0;
+}
+
+/*---------------------
+Hall of Fame Page
+---------------------*/
+
+/*Hall of Fame Title*/
+main h2 {
+    font-weight: 800;
+    letter-spacing: .5px;
+    color: #2b0a0a;
+}
+
+/*Card Styles*/
+.card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/*Moroon accent bar on left side*/
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background-color: #800000;
+}
+
+.card {
+    position: relative;
+    padding-left: 6px;
+}
+
+/*Card Hover Effect*/
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.15);
+}
+
+.card-title {
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.card ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.card ul li {
+    margin-bottom: 6px 0;
+}
+
+.hof-link {
+    color:#2b0a0a;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.hof-link:hover {
+    text-decoration: underline;
+}
+
+.hero.hero-hof{
+height:15;
+min-height:45vh;
+padding-top:60px;
+padding-bottom:60px;
+display:flex;
+align-items:flex-start;
 }
