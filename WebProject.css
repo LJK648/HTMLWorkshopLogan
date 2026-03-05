@@ -1,1 +1,84 @@
 /* This is for CSS code */
+/*General Style for the page*/
+body {
+    font-family: Tahoma, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/*Buttons*/
+.btn-primary {
+    background-color: #800000;
+    border-color:#800000
+}
+
+.btn-primary:hover {
+    background-color: #5c0000;
+    border-color: #5c0000;
+}
+
+/*Navigation Bar*/
+.navbar {
+    background-color: #800000 !important;
+}
+
+.navbar .navbar-brand {
+    font-weight: bold;
+    font-size: 1.4rem;
+}
+
+/*logo style*/
+.navbar .navbar-brand img {
+    border-radius: 50%;
+}
+
+/*Hero*/
+.hero {
+    height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    background: linear-gradient(
+        rgba(128,0,0,0.85),
+        rgba(0,0,0,0.7)
+    );
+    color: white;
+}
+
+/*Title*/
+.hero h1 {
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+/*Subtitle*/
+.hero p {
+    font-size: 1.3rem;
+    margin-top: 30px;
+}
+
+/*Footer*/
+.footer {
+    background-color: #800000;
+    color: white;
+    text-align: center;
+    padding: 30px 0;
+    text-align: center;
+}
+
+.footer a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+.footer p {
+    margin: 5px 0;
+}
