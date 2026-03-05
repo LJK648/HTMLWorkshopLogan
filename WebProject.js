@@ -70,4 +70,4 @@ function displayUserCard(userData) {
     `;
 
     userCardContainer.innerHTML = cardHtml;
-}// JavaScript code
+}
