@@ -167,3 +167,44 @@ padding-bottom:60px;
 display:flex;
 align-items:flex-start;
 }
+
+/* HOF trophies in hero */
+.hof-trophies{
+margin-top:40px;
+display:flex;
+justify-content:space-between;
+align-items:flex-end;
+gap:30px;
+}
+
+.hof-trophy{
+width:220px;
+max-width:28vw;
+height:auto;
+opacity:.95;
+filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+}
+
+.hof-trophy.mid{
+transform: translateY(10px) scale(1.05);
+}
+
+.hof-trophy.left{
+transform: translateY(25px);
+}
+
+.hof-trophy.right{
+transform: translateY(25px);
+}
+
+/* keep it clean on small screens */
+@media (max-width: 768px){
+.hof-trophies{
+justify-content:center;
+flex-wrap:wrap;
+}
+.hof-trophy{
+width:160px;
+max-width:45vw;
+}
+}
