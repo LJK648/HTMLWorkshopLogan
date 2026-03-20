@@ -34,11 +34,16 @@ function displayGames(games) {
           <p class="card-text"><strong>Location:</strong> ${escapeHtml(game.location)}</p>
           <p class="card-text"><strong>Date & Time:</strong> ${escapeHtml(formatDateTime(game.dateTime))}</p>
           <p class="card-text"><strong>Players signed up:</strong> ${game.playerCount}</p>
+          <button class="btn btn-info btn-sm me-2 btn-view-signups" data-gameid="${game.gameId}">View Signups</button>
           <button class="btn btn-success btn-sm me-2 btn-join" data-gameid="${game.gameId}">Join</button>
           <button class="btn btn-danger btn-sm btn-delete" data-gameid="${game.gameId}">Delete</button>
         </div>
       </div>`
     );
+
+    card.find('.btn-view-signups').on('click', function () {
+      viewSignups(game.gameId);
+    });
 
     card.find('.btn-join').on('click', function () {
       signup(game.gameId);
@@ -91,6 +96,28 @@ function addGame(event) {
   saveGames(games);
   displayGames(games);
   $('#gameForm')[0].reset();
+}
+
+function viewSignups(gameId) {
+  const games = loadGames();
+  const game = games.find(g => g.gameId === gameId);
+
+  if (!game) {
+    alert('Game not found.');
+    return;
+  }
+
+  if (!game.signups || game.signups.length === 0) {
+    alert(`No one has signed up for ${game.gameName} yet.`);
+    return;
+  }
+
+  let signupList = `Signups for ${game.gameName}:\n\n`;
+  game.signups.forEach((player, index) => {
+    signupList += `${index + 1}. ${escapeHtml(player.name)}\n   Email: ${escapeHtml(player.email)}\n\n`;
+  });
+
+  alert(signupList);
 }
 
 function signup(gameId) {
