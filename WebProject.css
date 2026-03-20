@@ -119,6 +119,27 @@ body {
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
+/*Page Header - for non-home pages*/
+.page-header {
+    background-color: #f0e6e6;
+    padding: 40px 0;
+    text-align: center;
+    border-bottom: 3px solid #800000;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #2b0a0a;
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    color: #555;
+    margin: 0;
+}
+
 /*Footer*/
 .footer {
     background-color: #800000;
