@@ -6,13 +6,7 @@
 <title>Vernball Games</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="WebProject.css">
-<style>
-main { flex: 1; }
-.card { border: 1px solid #ddd; border-radius: 10px; }
-.card-title { font-size: 1.25rem; font-weight: 700; }
-.container { margin-top: 30px; margin-bottom: 40px; }
-</style>
-</style>
+
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark">
@@ -39,11 +33,11 @@ Vernball League
 </div>
 </header>
 
-<div class="container">
-<div class="row g-4">
+<main class="container mt-5">
+
+<div class="row">
 <div class="col-lg-6">
-<div class="card p-4">
-<h4>Add New Game</h4>
+<h2>Add New Game</h2>
 <form id="gameForm">
 <div class="mb-3">
 <label class="form-label" for="gameName">Game Name</label>
@@ -69,16 +63,26 @@ Vernball League
 <button class="btn btn-primary" type="submit">Create Game</button>
 </form>
 </div>
-</div>
 <div class="col-lg-6">
+<h2>Registered Games</h2>
 <div class="mb-3">
-<label class="form-label" for="search">Search Games</label>
-<input class="form-control" id="search" type="search" placeholder="Search by game name or sport">
+<label class="form-label" for="searchType">Search By:</label>
+<select class="form-select" id="searchType" name="searchType">
+<option value="all" selected>All Fields</option>
+<option value="name">Game Name</option>
+<option value="sport">Sport</option>
+<option value="player">Player Name</option>
+</select>
+</div>
+<div class="mb-3">
+<label class="form-label" for="gameSearch">Search Games</label>
+<input class="form-control" id="gameSearch" type="search" placeholder="Enter game name, sport, or player name">
 </div>
 <div id="gamesContainer"></div>
 </div>
 </div>
-</div>
+</main>
+
 <footer class="footer">
 <div class="container text-center">
 <h5>Vernball Rec League</h5>

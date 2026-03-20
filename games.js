@@ -164,19 +164,58 @@ function deleteGame(gameId) {
   alert('Game deleted.');
 }
 
+function filterGames(query) {
+  const games = loadGames();
+  const searchType = document.getElementById('searchType')?.value || 'all';
+  
+  if (!query) {
+    displayGames(games);
+    return;
+  }
+
+  let filtered = [];
+
+  if (searchType === 'all') {
+    filtered = games.filter(g =>
+      g.gameName.toLowerCase().includes(query) ||
+      g.sport.toLowerCase().includes(query) ||
+      (g.signups && g.signups.some(s => s.name.toLowerCase().includes(query)))
+    );
+  } else if (searchType === 'name') {
+    filtered = games.filter(g =>
+      g.gameName.toLowerCase().includes(query)
+    );
+  } else if (searchType === 'sport') {
+    filtered = games.filter(g =>
+      g.sport.toLowerCase().includes(query)
+    );
+  } else if (searchType === 'player') {
+    filtered = games.filter(g =>
+      g.signups && g.signups.some(s => s.name.toLowerCase().includes(query))
+    );
+  }
+
+  displayGames(filtered);
+}
+
 $(document).ready(function () {
   const games = loadGames();
   displayGames(games);
 
   $('#gameForm').on('submit', addGame);
 
-  $('#search').on('keyup', function () {
-    const query = $(this).val().trim().toLowerCase();
-    const allGames = loadGames();
-    const filtered = allGames.filter(g =>
-      g.gameName.toLowerCase().includes(query) ||
-      g.sport.toLowerCase().includes(query)
-    );
-    displayGames(filtered);
-  });
+  const searchInput = document.getElementById('gameSearch');
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function () {
+      filterGames(this.value.trim().toLowerCase());
+    });
+  }
+
+  const searchTypeSelect = document.getElementById('searchType');
+  if (searchTypeSelect) {
+    searchTypeSelect.addEventListener('change', function () {
+      const currentQuery = (document.getElementById('gameSearch')?.value || '').trim().toLowerCase();
+      filterGames(currentQuery);
+    });
+  }
 });

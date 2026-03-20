@@ -30,7 +30,6 @@ function updatePositionOptions() {
     const positionSelect = document.getElementById('position');
     const selectedSport = sportSelect.value;
 
-    // Clear existing options
     positionSelect.innerHTML = '';
 
     if (!selectedSport || selectedSport === "Choose a Sport...") {
@@ -41,13 +40,11 @@ function updatePositionOptions() {
 
     positionSelect.disabled = false;
 
-    // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.selected = true;
     defaultOption.textContent = `Choose a ${selectedSport} Position...`;
     positionSelect.appendChild(defaultOption);
 
-    // Add sport-specific positions
     const positions = SPORT_POSITIONS[selectedSport] || [];
     positions.forEach(position => {
         const option = document.createElement('option');
@@ -55,20 +52,6 @@ function updatePositionOptions() {
         option.textContent = position;
         positionSelect.appendChild(option);
     });
-}
-
-function displayUserCard(userData) {
-    const userCardContainer = document.getElementById('userCard');
-    userCardContainer.innerHTML = `
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">${escapeHtml(userData.fullName)}</h5>
-                <p class="card-text">Email: ${escapeHtml(userData.email)}</p>
-                <p class="card-text">Sport: ${escapeHtml(userData.sport)}</p>
-                <p class="card-text">Position: ${escapeHtml(userData.position)}</p>
-            </div>
-        </div>
-    `;
 }
 
 function displayPlayers(players) {
@@ -150,7 +133,6 @@ function handleSubmit(event) {
     players.push(player);
     savePlayers(players);
 
-    displayUserCard(player);
     displayPlayers(players);
     clearForm(form);
     alert('Player registered!');
@@ -168,24 +150,20 @@ function filterPlayers(query) {
     let filtered = [];
 
     if (searchType === 'all') {
-        // Search across all fields
         filtered = players.filter(p =>
             p.fullName.toLowerCase().includes(query) ||
             p.position.toLowerCase().includes(query) ||
             (p.sport && p.sport.toLowerCase().includes(query))
         );
     } else if (searchType === 'name') {
-        // Search only by player name
         filtered = players.filter(p =>
             p.fullName.toLowerCase().includes(query)
         );
     } else if (searchType === 'sport') {
-        // Search only by sport
         filtered = players.filter(p =>
             p.sport && p.sport.toLowerCase().includes(query)
         );
     } else if (searchType === 'position') {
-        // Search only by position
         filtered = players.filter(p =>
             p.position.toLowerCase().includes(query)
         );
