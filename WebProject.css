@@ -160,10 +160,9 @@ main h2 {
 }
 
 .hero.hero-hof{
-height:15;
-min-height:45vh;
-padding-top:60px;
-padding-bottom:60px;
+min-height:42vh;
+padding-top:40px;
+padding-bottom:30px;
 display:flex;
 align-items:flex-start;
 }
