@@ -26,31 +26,32 @@ function savePlayers(players) {
 }
 
 function updatePositionOptions() {
-    const sportSelect = document.getElementById('sport');
-    const positionSelect = document.getElementById('position');
-    const selectedSport = sportSelect.value;
+    const sportSelect = document.getElementById('sports');
+    const selectedSports = Array.from(sportSelect.selectedOptions).map(o => o.value).filter(v => v);
+    const container = document.getElementById('sportPositions');
+    const mainContainer = document.getElementById('sportPositionsContainer');
 
-    positionSelect.innerHTML = '';
-
-    if (!selectedSport || selectedSport === "Choose a Sport...") {
-        positionSelect.innerHTML = '<option selected>Choose a Sport First...</option>';
-        positionSelect.disabled = true;
+    if (!selectedSports.length) {
+        mainContainer.style.display = 'none';
+        container.innerHTML = '';
         return;
     }
 
-    positionSelect.disabled = false;
+    mainContainer.style.display = 'block';
+    container.innerHTML = '';
 
-    const defaultOption = document.createElement('option');
-    defaultOption.selected = true;
-    defaultOption.textContent = `Choose a ${selectedSport} Position...`;
-    positionSelect.appendChild(defaultOption);
-
-    const positions = SPORT_POSITIONS[selectedSport] || [];
-    positions.forEach(position => {
-        const option = document.createElement('option');
-        option.value = position;
-        option.textContent = position;
-        positionSelect.appendChild(option);
+    selectedSports.forEach(sport => {
+        const positions = SPORT_POSITIONS[sport] || [];
+        const sportDiv = document.createElement('div');
+        sportDiv.className = 'mb-3';
+        sportDiv.innerHTML = `
+            <label for="position_${sport}" class="form-label">${sport}</label>
+            <select class="form-select sport-position-select" id="position_${sport}" data-sport="${sport}" required>
+                <option selected>-- Select Position --</option>
+                ${positions.map(p => `<option value="${p}">${p}</option>`).join('')}
+            </select>
+        `;
+        container.appendChild(sportDiv);
     });
 }
 
@@ -64,6 +65,20 @@ function displayPlayers(players) {
     }
 
     players.forEach((player, index) => {
+        const sports = Array.isArray(player.sports) ? player.sports : [player.sport].filter(Boolean);
+        const sportsText = sports.length ? sports.join(', ') : 'No sports';
+        const sportPositions = player.sportPositions || {};
+        
+        let positionsText = '';
+        if (sports.length > 0) {
+            positionsText = sports.map(sport => {
+                const pos = sportPositions[sport] || 'N/A';
+                return `${sport}: ${pos}`;
+            }).join(' | ');
+        } else {
+            positionsText = 'No positions';
+        }
+
         const card = document.createElement('div');
         card.className = 'card mb-2';
 
@@ -72,8 +87,8 @@ function displayPlayers(players) {
                 <div>
                     <h5 class="card-title mb-1">${escapeHtml(player.fullName)}</h5>
                     <p class="card-text mb-1">Email: ${escapeHtml(player.email)}</p>
-                    <p class="card-text mb-1">Sport: ${escapeHtml(player.sport)}</p>
-                    <p class="card-text mb-0">Position: ${escapeHtml(player.position)}</p>
+                    <p class="card-text mb-1">Sports: ${escapeHtml(sportsText)}</p>
+                    <p class="card-text mb-0">Positions: ${escapeHtml(positionsText)}</p>
                 </div>
                 <button class="btn btn-danger btn-sm" data-index="${index}">Delete</button>
             </div>
@@ -95,17 +110,30 @@ function escapeHtml(text) {
 
 function getFormData(form) {
     const formData = new FormData(form);
+    const sports = Array.from(formData.getAll('sports'))
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    const sportPositions = {};
+    sports.forEach(sport => {
+        const posSelect = document.getElementById(`position_${sport}`);
+        if (posSelect) {
+            sportPositions[sport] = posSelect.value.trim();
+        }
+    });
+
     return {
         fullName: formData.get('fullName').trim(),
         email: formData.get('email').trim(),
-        sport: formData.get('sport').trim(),
-        position: formData.get('position').trim()
+        sports: sports.slice(0, 3),
+        sportPositions: sportPositions
     };
 }
 
 function clearForm(form) {
     form.reset();
-    updatePositionOptions();
+    document.getElementById('sportPositionsContainer').style.display = 'none';
+    document.getElementById('sportPositions').innerHTML = '';
 }
 
 function deletePlayer(index) {
@@ -124,9 +152,22 @@ function handleSubmit(event) {
     const form = document.getElementById('registrationForm');
     const player = getFormData(form);
 
-    if (!player.fullName || !player.email || !player.sport || !player.position) {
-        alert('Please fill in all fields.');
+    if (!player.fullName || !player.email || !player.sports || !player.sports.length) {
+        alert('Please fill in all fields and select at least one sport.');
         return;
+    }
+
+    if (player.sports.length > 4) {
+        alert('You can select up to 4 sports.');
+        return;
+    }
+
+    // Validate that each sport has a position
+    for (const sport of player.sports) {
+        if (!player.sportPositions[sport] || player.sportPositions[sport] === '-- Select Position --') {
+            alert(`Please select a position for ${sport}.`);
+            return;
+        }
     }
 
     const players = loadPlayers();
@@ -147,26 +188,33 @@ function filterPlayers(query) {
         return;
     }
 
+    const text = query.toLowerCase();
     let filtered = [];
 
     if (searchType === 'all') {
-        filtered = players.filter(p =>
-            p.fullName.toLowerCase().includes(query) ||
-            p.position.toLowerCase().includes(query) ||
-            (p.sport && p.sport.toLowerCase().includes(query))
-        );
+        filtered = players.filter(p => {
+            const sports = Array.isArray(p.sports) ? p.sports : [p.sport].filter(Boolean);
+            const positions = Object.values(p.sportPositions || {}).join(' ').toLowerCase();
+            return (
+                p.fullName.toLowerCase().includes(text) ||
+                positions.includes(text) ||
+                sports.some(s => s.toLowerCase().includes(text))
+            );
+        });
     } else if (searchType === 'name') {
         filtered = players.filter(p =>
-            p.fullName.toLowerCase().includes(query)
+            p.fullName.toLowerCase().includes(text)
         );
     } else if (searchType === 'sport') {
-        filtered = players.filter(p =>
-            p.sport && p.sport.toLowerCase().includes(query)
-        );
+        filtered = players.filter(p => {
+            const sports = Array.isArray(p.sports) ? p.sports : [p.sport].filter(Boolean);
+            return sports.some(s => s.toLowerCase().includes(text));
+        });
     } else if (searchType === 'position') {
-        filtered = players.filter(p =>
-            p.position.toLowerCase().includes(query)
-        );
+        filtered = players.filter(p => {
+            const positions = Object.values(p.sportPositions || {}).join(' ').toLowerCase();
+            return positions.includes(text);
+        });
     }
 
     displayPlayers(filtered);
@@ -176,7 +224,7 @@ function initializeApp() {
     const form = document.getElementById('registrationForm');
     form.addEventListener('submit', handleSubmit);
 
-    const sportSelect = document.getElementById('sport');
+    const sportSelect = document.getElementById('sports');
     if (sportSelect) {
         sportSelect.addEventListener('change', updatePositionOptions);
     }

@@ -28,6 +28,12 @@ Vernball League
 <li class="nav-item">
 <a class="nav-link" href="games.html">Games</a>
 </li>
+<li class="nav-item">
+<a class="nav-link" href="team-builder.html">Team Builder</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" href="teams-list.html">View Teams</a>
+</li>
 </ul>
 </div>
 </div>
@@ -55,20 +61,18 @@ Vernball League
 <input type="email" class="form-control" id="email" name="email" required>
 </div>
 <div class="mb-3">
-<label for="sport" class="form-label">Sport</label>
-<select class="form-select" id="sport" name="sport" required>
-<option selected>Choose a Sport...</option>
+<label for="sports" class="form-label">Sports (select up to 4)</label>
+<select class="form-select" id="sports" name="sports" multiple size="4" required>
 <option value="Basketball">Basketball</option>
 <option value="Football">Football</option>
 <option value="Soccer">Soccer</option>
 <option value="Baseball">Baseball</option>
 </select>
+<small class="form-text text-muted">Use Ctrl/Cmd + click to select multiple sports (max 4)</small>
 </div>
-<div class="mb-3">
-<label for="position" class="form-label">Position</label>
-<select class="form-select" id="position" name="position" required>
-<option selected>Choose a Sport First...</option>
-</select>
+<div id="sportPositionsContainer" style="display: none;">
+<h5>Select Position for Each Sport</h5>
+<div id="sportPositions"></div>
 </div>
 <button type="submit" class="btn btn-primary">Register</button>
 </form>
@@ -106,7 +110,9 @@ Vernball League
 <a href="index.html">Home</a> |
 <a href="register.html">Player Registration</a> |
 <a href="hof.html">Hall of Fame</a> |
-<a href="games.html">Games</a>
+<a href="games.html">Games</a> |
+<a href="team-builder.html">Team Builder</a> |
+<a href="teams-list.html">View Teams</a>
 </div>
 
 <p class="copyright">
