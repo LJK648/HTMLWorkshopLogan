@@ -6,19 +6,19 @@ const HallOfFame = () => {
             name: 'Casey Capetola',
             award: 'MVP 2023',
             description: 'A respected leader whose performance helped define the league\'s community spirit.',
-            image: 'original-files/images/caseyc.jpg'
+            image: '/images/caseyc.jpg'
         },
         {
             name: 'Aidan O\'Neil',
             award: 'MVP 2024',
             description: 'Dominant on both ends of the court; known for clutch plays and consistent excellence.',
-            image: 'original-files/images/aidano.jpg'
+            image: '/images/aidano.jpg'
         },
         {
             name: 'Tyler Wassel',
             award: 'MVP 2025',
             description: 'Outstanding competitor and sportsman, a key influence in growing the league and raising the bar.',
-            image: 'original-files/images/tylerw.jpg'
+            image: '/images/tylerw.jpg'
         }
     ];
 
