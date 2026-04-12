@@ -8,6 +8,9 @@ import Games from './components/Games';
 import TeamBuilder from './components/TeamBuilder';
 import TeamsList from './components/TeamsList';
 import HallOfFame from './components/HallOfFame';
+import OrderHistory from './components/OrderHistory';
+import OrderApprovalPage from './components/OrderApprovalPage';
+import OrderCheckout from './components/OrderCheckout';
 
 function App() {
   return (
@@ -20,6 +23,9 @@ function App() {
             <Route path="/register" element={<PlayerRegistration />} />
             <Route path="/games" element={<Games />} />
             <Route path="/team-builder" element={<TeamBuilder />} />
+            <Route path="/checkout" element={<OrderCheckout />} />
+            <Route path="/orders" element={<OrderHistory />} />
+            <Route path="/order-approval" element={<OrderApprovalPage />} />
             <Route path="/teams-list" element={<TeamsList />} />
             <Route path="/hof" element={<HallOfFame />} />
           </Routes>
