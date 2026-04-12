@@ -30,6 +30,12 @@ const Navigation = () => {
             <li className="nav-item">
               <Link className="nav-link" to="/teams-list">View Teams</Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/game-history">Game History</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/game-approval">Game Approval</Link>
+            </li>
           </ul>
         </div>
       </div>

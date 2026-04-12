@@ -1,0 +1,12 @@
+{
+  "orders": [
+    {
+      "id": 1,
+      "customerId": "C001",
+      "items": [],
+      "total": 0,
+      "status": "pending",
+      "createdAt": ""
+    }
+  ]
+}
