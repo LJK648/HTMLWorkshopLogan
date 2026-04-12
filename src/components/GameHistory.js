@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
 
-const ORDERS_STORAGE_KEY = 'vernball_orders';
+const GAMES_STORAGE_KEY = 'vernball_games_history';
 
-const OrderHistory = () => {
-    const [orders, setOrders] = useState([]);
-    const [selectedOrder, setSelectedOrder] = useState(null);
+const GameHistory = () => {
+    const [games, setGames] = useState([]);
+    const [selectedGame, setSelectedGame] = useState(null);
     const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
-        loadOrders();
+        loadGames();
     }, []);
 
-    const loadOrders = () => {
-        const json = localStorage.getItem(ORDERS_STORAGE_KEY);
+    const loadGames = () => {
+        const json = localStorage.getItem(GAMES_STORAGE_KEY);
         if (json) {
             try {
                 const saved = JSON.parse(json);
-                setOrders(Array.isArray(saved) ? saved : []);
+                setGames(Array.isArray(saved) ? saved : []);
             } catch (error) {
-                console.error('Error reading orders', error);
+                console.error('Error reading games', error);
             }
         }
     };
 
-    const filteredOrders = orders.filter(order =>
-        order.id.toString().includes(searchText) ||
-        order.customerId.toLowerCase().includes(searchText.toLowerCase())
+    const filteredGames = games.filter(game =>
+        game.id.toString().includes(searchText) ||
+        game.sport.toLowerCase().includes(searchText.toLowerCase())
     );
 
     const getStatusBadgeColor = (status) => {
@@ -46,76 +46,75 @@ const OrderHistory = () => {
         <div>
             <header className="page-header">
                 <div className="container">
-                    <h1>Order History</h1>
-                    <p>View and track all your orders.</p>
+                    <h1>Game History</h1>
+                    <p>View and track all games.</p>
                 </div>
             </header>
 
             <main className="container mt-5">
                 <div className="row">
                     <div className="col-lg-8">
-                        <h3 className="mb-4">Your Orders</h3>
+                        <h3 className="mb-4">Games</h3>
 
                         <div className="mb-3">
                             <input
                                 type="text"
                                 className="form-control"
-                                placeholder="Search by Order ID or Customer ID..."
+                                placeholder="Search by Game ID or Sport..."
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                             />
                         </div>
 
-                        {filteredOrders.length === 0 ? (
+                        {filteredGames.length === 0 ? (
                             <div className="alert alert-info">
-                                {orders.length === 0 ? 'No orders yet.' : 'No orders match your search.'}
+                                {games.length === 0 ? 'No games yet.' : 'No games match your search.'}
                             </div>
                         ) : (
                             <div>
-                                {filteredOrders.map(order => (
-                                    <div className="card mb-3 shadow-sm" key={order.id}>
+                                {filteredGames.map(game => (
+                                    <div className="card mb-3 shadow-sm" key={game.id}>
                                         <div className="card-header d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h5 className="mb-0">Order #{order.id}</h5>
-                                                <small className="text-muted">Customer: {order.customerId}</small>
+                                                <h5 className="mb-0">Game #{game.id}</h5>
+                                                <small className="text-muted">Sport: {game.sport}</small>
                                             </div>
-                                            <span className={`badge bg-${getStatusBadgeColor(order.status)}`}>
-                                                {(order.status || 'pending').toUpperCase()}
+                                            <span className={`badge bg-${getStatusBadgeColor(game.status)}`}>
+                                                {(game.status || 'pending').toUpperCase()}
                                             </span>
                                         </div>
                                         <div className="card-body">
                                             <div className="row">
                                                 <div className="col-md-6">
-                                                    <p><strong>Items:</strong> {order.items?.length || 0}</p>
-                                                    <p><strong>Order Date:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
+                                                    <p><strong>Players:</strong> {game.players?.length || 0}</p>
+                                                    <p><strong>Game Date:</strong> {new Date(game.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                                 <div className="col-md-6 text-md-end">
-                                                    <p><strong>Total:</strong> <span className="h5 text-primary">${order.total?.toFixed(2) || '0.00'}</span></p>
+                                                    <p><strong>Signups:</strong> <span className="h5 text-primary">{game.signups || 0}</span></p>
                                                 </div>
                                             </div>
                                             <button
                                                 className="btn btn-sm btn-outline-primary"
-                                                onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)}
+                                                onClick={() => setSelectedGame(selectedGame?.id === game.id ? null : game)}
                                             >
-                                                {selectedOrder?.id === order.id ? 'Hide Details' : 'View Details'}
+                                                {selectedGame?.id === game.id ? 'Hide Details' : 'View Details'}
                                             </button>
                                         </div>
 
-                                        {selectedOrder?.id === order.id && (
+                                        {selectedGame?.id === game.id && (
                                             <div className="card-footer bg-light">
-                                                <h6>Order Details</h6>
-                                                {order.items && order.items.length > 0 ? (
+                                                <h6>Game Details</h6>
+                                                {game.players && game.players.length > 0 ? (
                                                     <ul className="list-unstyled">
-                                                        {order.items.map((item, idx) => (
+                                                        {game.players.map((player, idx) => (
                                                             <li key={idx} className="pb-2">
-                                                                <span className="me-3">{item.name || `Item ${idx + 1}`}</span>
-                                                                <span className="text-muted">Qty: {item.quantity || 1}</span>
-                                                                <span className="float-end">${item.price?.toFixed(2) || '0.00'}</span>
+                                                                <span className="me-3">{player.name || `Player ${idx + 1}`}</span>
+                                                                <span className="text-muted">Position: {player.position || 'N/A'}</span>
                                                             </li>
                                                         ))}
                                                     </ul>
                                                 ) : (
-                                                    <p className="text-muted">No items in this order.</p>
+                                                    <p className="text-muted">No players in this game.</p>
                                                 )}
                                             </div>
                                         )}
@@ -128,27 +127,23 @@ const OrderHistory = () => {
                     <div className="col-lg-4">
                         <div className="card shadow-sm">
                             <div className="card-header bg-light">
-                                <h5 className="mb-0">Order Statistics</h5>
+                                <h5 className="mb-0">Game Statistics</h5>
                             </div>
                             <div className="card-body">
                                 <p className="mb-2">
-                                    <strong>Total Orders:</strong> {orders.length}
+                                    <strong>Total Games:</strong> {games.length}
                                 </p>
                                 <p className="mb-2">
-                                    <strong>Pending:</strong> {orders.filter(o => o.status === 'pending' || !o.status).length}
+                                    <strong>Pending:</strong> {games.filter(o => o.status === 'pending' || !o.status).length}
                                 </p>
                                 <p className="mb-2">
-                                    <strong>Approved:</strong> {orders.filter(o => o.status === 'approved').length}
+                                    <strong>Approved:</strong> {games.filter(o => o.status === 'approved').length}
                                 </p>
                                 <p className="mb-2">
-                                    <strong>Completed:</strong> {orders.filter(o => o.status === 'completed').length}
+                                    <strong>Completed:</strong> {games.filter(o => o.status === 'completed').length}
                                 </p>
                                 <p className="mb-2">
-                                    <strong>Rejected:</strong> {orders.filter(o => o.status === 'rejected').length}
-                                </p>
-                                <hr />
-                                <p className="mb-0">
-                                    <strong>Total Revenue:</strong> <span className="text-success h6">${orders.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(2)}</span>
+                                    <strong>Cancelled:</strong> {games.filter(o => o.status === 'cancelled').length}
                                 </p>
                             </div>
                         </div>
@@ -159,4 +154,4 @@ const OrderHistory = () => {
     );
 };
 
-export default OrderHistory;
+export default GameHistory;

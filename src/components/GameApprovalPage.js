@@ -1,47 +1,47 @@
 import React, { useState, useEffect } from 'react';
 
-const ORDERS_STORAGE_KEY = 'vernball_orders';
+const GAMES_STORAGE_KEY = 'vernball_games_history';
 
-const OrderApprovalPage = () => {
-    const [orders, setOrders] = useState([]);
+const GameApprovalPage = () => {
+    const [games, setGames] = useState([]);
     const [filter, setFilter] = useState('all');
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('danger');
 
     useEffect(() => {
-        loadOrders();
+        loadGames();
     }, []);
 
-    const loadOrders = () => {
-        const json = localStorage.getItem(ORDERS_STORAGE_KEY);
+    const loadGames = () => {
+        const json = localStorage.getItem(GAMES_STORAGE_KEY);
         if (json) {
             try {
                 const saved = JSON.parse(json);
-                setOrders(Array.isArray(saved) ? saved : []);
+                setGames(Array.isArray(saved) ? saved : []);
             } catch (error) {
-                console.error('Error reading orders', error);
+                console.error('Error reading games', error);
             }
         }
     };
 
-    const saveOrders = (newOrders) => {
-        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(newOrders));
-        setOrders(newOrders);
+    const saveGames = (newGames) => {
+        localStorage.setItem(GAMES_STORAGE_KEY, JSON.stringify(newGames));
+        setGames(newGames);
     };
 
-    const updateOrderStatus = (orderId, newStatus) => {
-        const updatedOrders = orders.map(order =>
-            order.id === orderId ? { ...order, status: newStatus } : order
+    const updateOrderStatus = (gameId, newStatus) => {
+        const updatedGames = games.map(game =>
+            game.id === gameId ? { ...game, status: newStatus } : game
         );
-        saveOrders(updatedOrders);
-        showMessage(`Order ${orderId} marked as ${newStatus}`, 'success');
+        saveGames(updatedGames);
+        showMessage(`Game ${gameId} marked as ${newStatus}`, 'success');
     };
 
-    const deleteOrder = (orderId) => {
-        if (!window.confirm('Are you sure you want to delete this order?')) return;
-        const newOrders = orders.filter(order => order.id !== orderId);
-        saveOrders(newOrders);
-        showMessage('Order deleted', 'success');
+    const deleteOrder = (gameId) => {
+        if (!window.confirm('Are you sure you want to delete this game?')) return;
+        const newGames = games.filter(game => game.id !== gameId);
+        saveGames(newGames);
+        showMessage('Game deleted', 'success');
     };
 
     const showMessage = (msg, type = 'danger') => {
@@ -51,15 +51,15 @@ const OrderApprovalPage = () => {
     };
 
     const filteredOrders = filter === 'all'
-        ? orders
-        : orders.filter(order => order.status === filter);
+        ? games
+        : games.filter(game => game.status === filter);
 
     return (
         <div>
             <header className="page-header">
                 <div className="container">
-                    <h1>Order Approval Management</h1>
-                    <p>Review and manage all customer orders.</p>
+                    <h1>Game Approval Management</h1>
+                    <p>Review and manage all game requests.</p>
                 </div>
             </header>
 
@@ -88,60 +88,60 @@ const OrderApprovalPage = () => {
                 </div>
 
                 {filteredOrders.length === 0 ? (
-                    <div className="alert alert-info">No orders found.</div>
+                    <div className="alert alert-info">No games found.</div>
                 ) : (
                     <div className="row">
-                        {filteredOrders.map(order => (
-                            <div className="col-md-6 col-lg-4 mb-4" key={order.id}>
+                        {filteredOrders.map(game => (
+                            <div className="col-md-6 col-lg-4 mb-4" key={game.id}>
                                 <div className="card shadow-sm">
                                     <div className="card-header bg-light">
-                                        <h5 className="mb-0">Order #{order.id}</h5>
-                                        <small className="text-muted">Customer: {order.customerId}</small>
+                                        <h5 className="mb-0">Game #{game.id}</h5>
+                                        <small className="text-muted">Sport: {game.sport}</small>
                                     </div>
                                     <div className="card-body">
-                                        <p><strong>Items:</strong> {order.items?.length || 0}</p>
-                                        <p><strong>Total:</strong> ${order.total?.toFixed(2) || '0.00'}</p>
+                                        <p><strong>Players:</strong> {game.players?.length || 0}</p>
+                                        <p><strong>Signups:</strong> {game.signups || 0}</p>
                                         <p>
                                             <strong>Status:</strong>{' '}
                                             <span className={`badge bg-${
-                                                order.status === 'approved' ? 'success' :
-                                                order.status === 'rejected' ? 'danger' :
-                                                order.status === 'completed' ? 'info' :
+                                                game.status === 'approved' ? 'success' :
+                                                game.status === 'rejected' ? 'danger' :
+                                                game.status === 'completed' ? 'info' :
                                                 'warning'
                                             }`}>
-                                                {order.status || 'pending'}
+                                                {game.status || 'pending'}
                                             </span>
                                         </p>
-                                        <p><small className="text-muted">Created: {new Date(order.createdAt).toLocaleDateString()}</small></p>
+                                        <p><small className="text-muted">Created: {new Date(game.createdAt).toLocaleDateString()}</small></p>
                                     </div>
                                     <div className="card-footer">
-                                        {order.status === 'pending' && (
+                                        {game.status === 'pending' && (
                                             <>
                                                 <button
                                                     className="btn btn-sm btn-success me-2"
-                                                    onClick={() => updateOrderStatus(order.id, 'approved')}
+                                                    onClick={() => updateOrderStatus(game.id, 'approved')}
                                                 >
                                                     Approve
                                                 </button>
                                                 <button
                                                     className="btn btn-sm btn-danger"
-                                                    onClick={() => updateOrderStatus(order.id, 'rejected')}
+                                                    onClick={() => updateOrderStatus(game.id, 'rejected')}
                                                 >
                                                     Reject
                                                 </button>
                                             </>
                                         )}
-                                        {order.status === 'approved' && (
+                                        {game.status === 'approved' && (
                                             <button
                                                 className="btn btn-sm btn-info"
-                                                onClick={() => updateOrderStatus(order.id, 'completed')}
+                                                onClick={() => updateOrderStatus(game.id, 'completed')}
                                             >
                                                 Mark Complete
                                             </button>
                                         )}
                                         <button
                                             className="btn btn-sm btn-outline-danger ms-2"
-                                            onClick={() => deleteOrder(order.id)}
+                                            onClick={() => deleteOrder(game.id)}
                                         >
                                             Delete
                                         </button>
@@ -156,4 +156,4 @@ const OrderApprovalPage = () => {
     );
 };
 
-export default OrderApprovalPage;
+export default GameApprovalPage;
