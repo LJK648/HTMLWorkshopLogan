@@ -1,56 +1,61 @@
 import React, { useState, useEffect } from 'react';
 
-const GAMES_STORAGE_KEY = 'vernball_games_history';
-
 const GameApprovalPage = () => {
     const [games, setGames] = useState([]);
     const [filter, setFilter] = useState('all');
     const [message, setMessage] = useState('');
-    const [messageType, setMessageType] = useState('danger');
+    const [messageType, setMessageType] = useState('success');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadGames();
+        fetchGames();
     }, []);
 
-    const loadGames = () => {
-        const json = localStorage.getItem(GAMES_STORAGE_KEY);
-        if (json) {
-            try {
-                const saved = JSON.parse(json);
-                setGames(Array.isArray(saved) ? saved : []);
-            } catch (error) {
-                console.error('Error reading games', error);
-            }
-        }
+    const fetchGames = () => {
+        setLoading(true);
+        fetch('/api/orders')
+            .then(res => res.json())
+            .then(data => {
+                setGames(Array.isArray(data) ? data : []);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Error fetching games:', err);
+                setLoading(false);
+            });
     };
 
-    const saveGames = (newGames) => {
-        localStorage.setItem(GAMES_STORAGE_KEY, JSON.stringify(newGames));
-        setGames(newGames);
+    const approveGame = (gameId) => {
+        fetch(`/api/orders/${gameId}/approve`, { method: 'PUT' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Game approved successfully!', 'success');
+                    fetchGames(); // Reload from backend
+                }
+            })
+            .catch(err => console.error('Error approving game:', err));
     };
 
-    const updateOrderStatus = (gameId, newStatus) => {
-        const updatedGames = games.map(game =>
-            game.id === gameId ? { ...game, status: newStatus } : game
-        );
-        saveGames(updatedGames);
-        showMessage(`Game ${gameId} marked as ${newStatus}`, 'success');
+    const declineGame = (gameId) => {
+        fetch(`/api/orders/${gameId}/decline`, { method: 'PUT' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Game declined.', 'warning');
+                    fetchGames(); // Reload from backend
+                }
+            })
+            .catch(err => console.error('Error declining game:', err));
     };
 
-    const deleteOrder = (gameId) => {
-        if (!window.confirm('Are you sure you want to delete this game?')) return;
-        const newGames = games.filter(game => game.id !== gameId);
-        saveGames(newGames);
-        showMessage('Game deleted', 'success');
-    };
-
-    const showMessage = (msg, type = 'danger') => {
+    const showMessage = (msg, type = 'success') => {
         setMessage(msg);
         setMessageType(type);
         setTimeout(() => setMessage(''), 5000);
     };
 
-    const filteredOrders = filter === 'all'
+    const filteredGames = filter === 'all'
         ? games
         : games.filter(game => game.status === filter);
 
@@ -72,9 +77,9 @@ const GameApprovalPage = () => {
                 )}
 
                 <div className="mb-4">
-                    <h3>Filter Orders</h3>
+                    <h3>Filter by Status</h3>
                     <div className="btn-group" role="group">
-                        {['all', 'pending', 'approved', 'rejected', 'completed'].map(status => (
+                        {['all', 'pending', 'approved', 'declined'].map(status => (
                             <button
                                 key={status}
                                 type="button"
@@ -87,64 +92,58 @@ const GameApprovalPage = () => {
                     </div>
                 </div>
 
-                {filteredOrders.length === 0 ? (
+                {loading ? (
+                    <div className="alert alert-info">Loading games...</div>
+                ) : filteredGames.length === 0 ? (
                     <div className="alert alert-info">No games found.</div>
                 ) : (
                     <div className="row">
-                        {filteredOrders.map(game => (
+                        {filteredGames.map(game => (
                             <div className="col-md-6 col-lg-4 mb-4" key={game.id}>
                                 <div className="card shadow-sm">
                                     <div className="card-header bg-light">
-                                        <h5 className="mb-0">Game #{game.id}</h5>
+                                        <h5 className="mb-0">{game.gameName || 'Unnamed Game'}</h5>
                                         <small className="text-muted">Sport: {game.sport}</small>
                                     </div>
                                     <div className="card-body">
-                                        <p><strong>Players:</strong> {game.players?.length || 0}</p>
-                                        <p><strong>Signups:</strong> {game.signups || 0}</p>
+                                        <p><strong>Location:</strong> {game.location || 'N/A'}</p>
+                                        <p><strong>Date & Time:</strong> {game.dateTime ? new Date(game.dateTime).toLocaleString() : 'N/A'}</p>
+                                        <p><strong>Order ID:</strong> {game.id}</p>
                                         <p>
                                             <strong>Status:</strong>{' '}
                                             <span className={`badge bg-${
                                                 game.status === 'approved' ? 'success' :
-                                                game.status === 'rejected' ? 'danger' :
-                                                game.status === 'completed' ? 'info' :
+                                                game.status === 'declined' ? 'danger' :
                                                 'warning'
                                             }`}>
                                                 {game.status || 'pending'}
                                             </span>
                                         </p>
-                                        <p><small className="text-muted">Created: {new Date(game.createdAt).toLocaleDateString()}</small></p>
+                                        <p><small className="text-muted">Submitted: {new Date(game.date).toLocaleDateString()}</small></p>
                                     </div>
                                     <div className="card-footer">
-                                        {game.status === 'pending' && (
+                                        {(game.status === 'pending' || !game.status) && (
                                             <>
                                                 <button
                                                     className="btn btn-sm btn-success me-2"
-                                                    onClick={() => updateOrderStatus(game.id, 'approved')}
+                                                    onClick={() => approveGame(game.id)}
                                                 >
                                                     Approve
                                                 </button>
                                                 <button
                                                     className="btn btn-sm btn-danger"
-                                                    onClick={() => updateOrderStatus(game.id, 'rejected')}
+                                                    onClick={() => declineGame(game.id)}
                                                 >
-                                                    Reject
+                                                    Decline
                                                 </button>
                                             </>
                                         )}
                                         {game.status === 'approved' && (
-                                            <button
-                                                className="btn btn-sm btn-info"
-                                                onClick={() => updateOrderStatus(game.id, 'completed')}
-                                            >
-                                                Mark Complete
-                                            </button>
+                                            <span className="text-success fw-bold">✓ Approved</span>
                                         )}
-                                        <button
-                                            className="btn btn-sm btn-outline-danger ms-2"
-                                            onClick={() => deleteOrder(game.id)}
-                                        >
-                                            Delete
-                                        </button>
+                                        {game.status === 'declined' && (
+                                            <span className="text-danger fw-bold">✗ Declined</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
