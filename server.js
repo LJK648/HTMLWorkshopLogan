@@ -60,7 +60,7 @@ app.put('/api/orders/:id/decline', (req, res) => {
 });
 
 // Catch-all: send React app for any other route
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
