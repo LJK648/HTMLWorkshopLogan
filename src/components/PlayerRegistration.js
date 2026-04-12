@@ -17,7 +17,6 @@ const PlayerRegistration = () => {
     const [sportPositions, setSportPositions] = useState({});
     const [showPositions, setShowPositions] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [searchType, setSearchType] = useState('all');
 
     // Load players from localStorage
     useEffect(() => {
@@ -114,7 +113,6 @@ const PlayerRegistration = () => {
 
         const text = query.toLowerCase();
         return players.filter(p => {
-            const sports = Array.isArray(p.sports) ? p.sports : [p.sport].filter(Boolean);
             const positions = Object.values(p.sportPositions || {}).join(' ').toLowerCase();
             return (
                 p.fullName.toLowerCase().includes(text) ||
