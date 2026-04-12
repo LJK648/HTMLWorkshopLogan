@@ -43,18 +43,6 @@ body {
     color: white;
     position: relative;
     overflow: hidden;
-
-    background: linear-gradient(
-        135deg,
-        rgba(128,0,0,0.85) 0%,
-        rgba(80,0,0,0.8) 50%,
-        rgba(0,0,0,0.7) 100%
-    ),
-    url('/images/trophy1.JPG') no-repeat 10% 20%,
-    url('/images/trophy2.JPG') no-repeat 90% 80%,
-    url('/images/vernball-logo.JPG') no-repeat 50% 50%;
-    background-size: cover, 250px 250px, 280px 280px, 300px 300px;
-    background-attachment: fixed;
 }
 
 .hero::before {
