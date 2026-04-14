@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
-const STORAGE_KEY = "vernball_players";
-
 const SPORT_POSITIONS = {
     Basketball: ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center"],
     Football: ["Quarterback", "Running Back", "Wide Receiver", "Tight End", "Offensive Lineman", "Defensive End", "Linebacker", "Defensive Back"],
     Soccer: ["Goalkeeper", "Defender", "Midfielder", "Forward"],
     Baseball: ["Pitcher", "Catcher", "Infielder", "Outfielder"]
 };
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const PlayerRegistration = () => {
     const [players, setPlayers] = useState([]);
@@ -17,24 +17,30 @@ const PlayerRegistration = () => {
     const [sportPositions, setSportPositions] = useState({});
     const [showPositions, setShowPositions] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // Load players from localStorage
-    useEffect(() => {
-        const json = localStorage.getItem(STORAGE_KEY);
-        if (json) {
-            try {
-                const saved = JSON.parse(json);
-                setPlayers(Array.isArray(saved) ? saved : []);
-            } catch (error) {
-                console.error('Error reading players from localStorage', error);
+    // Fetch players from API
+    const fetchPlayers = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/players`);
+            if (response.ok) {
+                const data = await response.json();
+                setPlayers(data);
             }
+        } catch (error) {
+            console.error('Error fetching players:', error);
         }
-    }, []);
-
-    const savePlayers = (newPlayers) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newPlayers));
-        setPlayers(newPlayers);
     };
+
+    // Load players on mount and set up auto-refresh
+    useEffect(() => {
+        fetchPlayers();
+        
+        // Auto-refresh every 3 seconds to see partner's changes
+        const interval = setInterval(fetchPlayers, 3000);
+        
+        return () => clearInterval(interval);
+    }, []);
 
     const handleSportChange = (e) => {
         const sport = e.target.value;
@@ -67,7 +73,7 @@ const PlayerRegistration = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!fullName.trim() || !email.trim() || selectedSports.length === 0) {
@@ -82,28 +88,60 @@ const PlayerRegistration = () => {
             }
         }
 
-        const newPlayer = {
-            fullName: fullName.trim(),
-            email: email.trim(),
-            sports: selectedSports,
-            sportPositions: sportPositions
-        };
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/api/players`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    fullName: fullName.trim(),
+                    email: email.trim(),
+                    sports: selectedSports,
+                    sportPositions: sportPositions
+                })
+            });
 
-        const newPlayers = [...players, newPlayer];
-        savePlayers(newPlayers);
-
-        setFullName('');
-        setEmail('');
-        setSelectedSports([]);
-        setSportPositions({});
-        setShowPositions(false);
-        alert('Player registered!');
+            if (response.ok) {
+                setFullName('');
+                setEmail('');
+                setSelectedSports([]);
+                setSportPositions({});
+                setShowPositions(false);
+                alert('Player registered!');
+                
+                // Refresh players list
+                await fetchPlayers();
+            } else {
+                alert('Error registering player');
+            }
+        } catch (error) {
+            console.error('Error submitting player:', error);
+            alert('Error registering player: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const deletePlayer = (index) => {
-        if (!window.confirm(`Delete player ${players[index].fullName}?`)) return;
-        const newPlayers = players.filter((_, i) => i !== index);
-        savePlayers(newPlayers);
+    const deletePlayer = async (playerId) => {
+        if (!window.confirm(`Delete this player?`)) return;
+        
+        try {
+            const response = await fetch(`${API_URL}/api/players/${playerId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Refresh players list
+                await fetchPlayers();
+            } else {
+                alert('Error deleting player');
+            }
+        } catch (error) {
+            console.error('Error deleting player:', error);
+            alert('Error deleting player: ' + error.message);
+        }
     };
 
     const filterPlayers = (query) => {
@@ -203,7 +241,13 @@ const PlayerRegistration = () => {
                                 </div>
                             )}
 
-                            <button type="submit" className="btn btn-primary">Register Player</button>
+                            <button 
+                                type="submit" 
+                                className="btn btn-primary"
+                                disabled={loading}
+                            >
+                                {loading ? 'Registering...' : 'Register Player'}
+                            </button>
                         </form>
                     </div>
 
@@ -223,14 +267,14 @@ const PlayerRegistration = () => {
                             {filteredPlayers.length === 0 ? (
                                 <div className="alert alert-info">No registered players yet.</div>
                             ) : (
-                                filteredPlayers.map((player, index) => {
+                                filteredPlayers.map((player) => {
                                     const sports = Array.isArray(player.sports) ? player.sports : [player.sport].filter(Boolean);
                                     const sportsText = sports.length ? sports.join(', ') : 'No sports';
                                     const sportPositions = player.sportPositions || {};
                                     const positionsText = sports.length ? sports.map(s => `${s}: ${sportPositions[s] || 'N/A'}`).join(' | ') : 'No positions';
 
                                     return (
-                                        <div className="card mb-2" key={index}>
+                                        <div className="card mb-2" key={player.id}>
                                             <div className="card-body d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <h5 className="card-title mb-1">{player.fullName}</h5>
@@ -240,7 +284,7 @@ const PlayerRegistration = () => {
                                                 </div>
                                                 <button
                                                     className="btn btn-danger btn-sm"
-                                                    onClick={() => deletePlayer(index)}
+                                                    onClick={() => deletePlayer(player.id)}
                                                 >
                                                     Delete
                                                 </button>

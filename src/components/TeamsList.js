@@ -1,48 +1,52 @@
 import React, { useState, useEffect } from 'react';
 
-const PLAYERS_STORAGE_KEY = 'vernball_players';
-const TEAMS_STORAGE_KEY = 'vernball_teams';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const TeamsList = () => {
     const [teams, setTeams] = useState([]);
     const [allPlayers, setAllPlayers] = useState([]);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('danger');
+    const [loading, setLoading] = useState(false);
 
-    // Load teams and players from localStorage
+    // Fetch teams and players from API
+    const fetchTeams = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/teams`);
+            if (response.ok) {
+                const data = await response.json();
+                setTeams(data);
+            }
+        } catch (error) {
+            console.error('Error fetching teams:', error);
+        }
+    };
+
+    const fetchPlayers = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/players`);
+            if (response.ok) {
+                const data = await response.json();
+                setAllPlayers(data);
+            }
+        } catch (error) {
+            console.error('Error fetching players:', error);
+        }
+    };
+
+    // Load data on mount and set up auto-refresh
     useEffect(() => {
-        loadTeams();
-        loadPlayers();
+        fetchTeams();
+        fetchPlayers();
+        
+        // Auto-refresh every 3 seconds to see partner's changes
+        const interval = setInterval(() => {
+            fetchTeams();
+            fetchPlayers();
+        }, 3000);
+        
+        return () => clearInterval(interval);
     }, []);
-
-    const loadTeams = () => {
-        const json = localStorage.getItem(TEAMS_STORAGE_KEY);
-        if (json) {
-            try {
-                const saved = JSON.parse(json);
-                setTeams(Array.isArray(saved) ? saved : []);
-            } catch (error) {
-                console.error('Error reading teams', error);
-            }
-        }
-    };
-
-    const loadPlayers = () => {
-        const json = localStorage.getItem(PLAYERS_STORAGE_KEY);
-        if (json) {
-            try {
-                const saved = JSON.parse(json);
-                setAllPlayers(Array.isArray(saved) ? saved : []);
-            } catch (error) {
-                console.error('Error reading players', error);
-            }
-        }
-    };
-
-    const saveTeams = (newTeams) => {
-        localStorage.setItem(TEAMS_STORAGE_KEY, JSON.stringify(newTeams));
-        setTeams(newTeams);
-    };
 
     const showMessage = (msg, type = 'danger') => {
         setMessage(msg);
@@ -73,18 +77,16 @@ const TeamsList = () => {
         return Math.max(1, Math.min(sports.length, 3));
     };
 
-    const removePlayerFromTeam = (teamId, playerEmail) => {
+    const removePlayerFromTeam = async (teamId, playerEmail) => {
         if (!window.confirm('Remove this player from the roster?')) return;
 
-        const teamIndex = teams.findIndex(t => t.teamId === teamId);
-        if (teamIndex === -1) {
+        const team = teams.find(t => t.id === teamId);
+        if (!team) {
             showMessage('Team not found.', 'warning');
             return;
         }
 
-        const team = teams[teamIndex];
         const playerIndex = team.players.findIndex(p => p.email === playerEmail);
-
         if (playerIndex === -1) {
             showMessage('Player not found in team.', 'warning');
             return;
@@ -97,24 +99,61 @@ const TeamsList = () => {
             return;
         }
 
-        team.players.splice(playerIndex, 1);
-        saveTeams([...teams]);
-        showMessage(`${playerName} removed from roster.`, 'success');
+        setLoading(true);
+        try {
+            const updatedPlayers = team.players.filter((_, idx) => idx !== playerIndex);
+            const response = await fetch(`${API_URL}/api/teams/${teamId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sport: team.sport,
+                    players: updatedPlayers
+                })
+            });
+
+            if (response.ok) {
+                showMessage(`${playerName} removed from roster.`, 'success');
+                await fetchTeams();
+            } else {
+                showMessage('Error removing player', 'danger');
+            }
+        } catch (error) {
+            console.error('Error removing player:', error);
+            showMessage('Error removing player: ' + error.message, 'danger');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const deleteTeam = (teamId) => {
+    const deleteTeam = async (teamId) => {
         if (!window.confirm('Delete this entire team? This action cannot be undone.')) return;
 
-        const teamIndex = teams.findIndex(t => t.teamId === teamId);
-        if (teamIndex === -1) {
+        const team = teams.find(t => t.id === teamId);
+        if (!team) {
             showMessage('Team not found.', 'warning');
             return;
         }
 
-        const teamName = teams[teamIndex].teamName;
-        const newTeams = teams.filter((_, i) => i !== teamIndex);
-        saveTeams(newTeams);
-        showMessage(`Team "${teamName}" deleted successfully.`, 'success');
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/api/teams/${teamId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showMessage(`Team "${team.teamName}" deleted successfully.`, 'success');
+                await fetchTeams();
+            } else {
+                showMessage('Error deleting team', 'danger');
+            }
+        } catch (error) {
+            console.error('Error deleting team:', error);
+            showMessage('Error deleting team: ' + error.message, 'danger');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const formatDate = (isoString) => {
@@ -151,7 +190,8 @@ const TeamsList = () => {
                         </div>
                         <button
                             className="btn btn-sm btn-danger"
-                            onClick={() => removePlayerFromTeam(team.teamId, teamPlayer.email)}
+                            onClick={() => removePlayerFromTeam(team.id, teamPlayer.email)}
+                            disabled={loading}
                         >
                             Remove
                         </button>
@@ -202,7 +242,7 @@ const TeamsList = () => {
                         const playerCount = (team.players && team.players.length) || 0;
 
                         return (
-                            <div className="card mb-4 shadow-sm" key={team.teamId}>
+                            <div className="card mb-4 shadow-sm" key={team.id}>
                                 <div className="card-header bg-light d-flex justify-content-between align-items-center">
                                     <div>
                                         <h5 className="mb-0">{team.teamName}</h5>
@@ -212,7 +252,8 @@ const TeamsList = () => {
                                     </div>
                                     <button
                                         className="btn btn-sm btn-danger"
-                                        onClick={() => deleteTeam(team.teamId)}
+                                        onClick={() => deleteTeam(team.id)}
+                                        disabled={loading}
                                     >
                                         Delete Team
                                     </button>

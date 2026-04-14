@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-const PLAYERS_STORAGE_KEY = 'vernball_players';
-const TEAMS_STORAGE_KEY = 'vernball_teams';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const TeamBuilder = () => {
     const [allPlayers, setAllPlayers] = useState([]);
+    const [allTeams, setAllTeams] = useState([]);
     const [roster, setRoster] = useState([]);
     const [teamName, setTeamName] = useState('');
     const [teamSport, setTeamSport] = useState('all');
@@ -12,18 +12,45 @@ const TeamBuilder = () => {
     const [searchText, setSearchText] = useState('');
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('danger');
+    const [loading, setLoading] = useState(false);
 
-    // Load players from localStorage
-    useEffect(() => {
-        const json = localStorage.getItem(PLAYERS_STORAGE_KEY);
-        if (json) {
-            try {
-                const saved = JSON.parse(json);
-                setAllPlayers(Array.isArray(saved) ? saved : []);
-            } catch (error) {
-                console.error('Error reading players', error);
+    // Fetch players and teams from API
+    const fetchPlayers = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/players`);
+            if (response.ok) {
+                const data = await response.json();
+                setAllPlayers(data);
             }
+        } catch (error) {
+            console.error('Error fetching players:', error);
         }
+    };
+
+    const fetchTeams = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/teams`);
+            if (response.ok) {
+                const data = await response.json();
+                setAllTeams(data);
+            }
+        } catch (error) {
+            console.error('Error fetching teams:', error);
+        }
+    };
+
+    // Load data on mount and set up auto-refresh
+    useEffect(() => {
+        fetchPlayers();
+        fetchTeams();
+        
+        // Auto-refresh every 3 seconds to see partner's changes
+        const interval = setInterval(() => {
+            fetchPlayers();
+            fetchTeams();
+        }, 3000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     const getPlayerSports = (player) => {
@@ -41,19 +68,12 @@ const TeamBuilder = () => {
     };
 
     const countTeamsForPlayer = (playerEmail) => {
-        const json = localStorage.getItem(TEAMS_STORAGE_KEY);
-        if (!json) return 0;
-        try {
-            const teams = JSON.parse(json);
-            return teams.reduce((count, team) => {
-                if (team.players && Array.isArray(team.players)) {
-                    return count + (team.players.some(p => p.email === playerEmail) ? 1 : 0);
-                }
-                return count;
-            }, 0);
-        } catch {
-            return 0;
-        }
+        return allTeams.reduce((count, team) => {
+            if (team.players && Array.isArray(team.players)) {
+                return count + (team.players.some(p => p.email === playerEmail) ? 1 : 0);
+            }
+            return count;
+        }, 0);
     };
 
     const getMaxTeamsForPlayer = (player) => {
@@ -111,7 +131,7 @@ const TeamBuilder = () => {
         setRoster(roster.filter(r => r.email !== email));
     };
 
-    const createTeam = () => {
+    const createTeam = async () => {
         if (!teamName.trim()) {
             showMessage('Please enter a team name.', 'danger');
             return;
@@ -123,37 +143,43 @@ const TeamBuilder = () => {
             return;
         }
 
-        const newTeam = {
-            teamId: Date.now(),
-            teamName: teamName.trim(),
-            sport: rosterSport,
-            players: roster.map(p => ({
-                fullName: p.fullName,
-                email: p.email,
-                sport: rosterSport,
-                position: getPlayerPositionForSport(p, rosterSport)
-            })),
-            createdAt: new Date().toISOString()
-        };
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/api/teams`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    teamName: teamName.trim(),
+                    sport: rosterSport,
+                    players: roster.map(p => ({
+                        fullName: p.fullName,
+                        email: p.email,
+                        sport: rosterSport,
+                        position: getPlayerPositionForSport(p, rosterSport)
+                    }))
+                })
+            });
 
-        const json = localStorage.getItem(TEAMS_STORAGE_KEY);
-        let teams = [];
-        if (json) {
-            try {
-                teams = JSON.parse(json);
-            } catch (error) {
-                console.error('Error parsing teams', error);
+            if (response.ok) {
+                showMessage(`Team "${teamName}" created successfully!`, 'success');
+                setTeamName('');
+                setRoster([]);
+                setCurrentTeamSport('all');
+                setTeamSport('all');
+                
+                // Refresh teams list
+                await fetchTeams();
+            } else {
+                showMessage('Error creating team', 'danger');
             }
+        } catch (error) {
+            console.error('Error creating team:', error);
+            showMessage('Error creating team: ' + error.message, 'danger');
+        } finally {
+            setLoading(false);
         }
-
-        teams.push(newTeam);
-        localStorage.setItem(TEAMS_STORAGE_KEY, JSON.stringify(teams));
-
-        showMessage(`Team "${teamName}" created successfully!`, 'success');
-        setTeamName('');
-        setRoster([]);
-        setCurrentTeamSport('all');
-        setTeamSport('all');
     };
 
     const renderPlayerPool = () => {
@@ -265,8 +291,12 @@ const TeamBuilder = () => {
                             )}
                         </div>
 
-                        <button className="btn btn-success" onClick={createTeam}>
-                            Create Team
+                        <button 
+                            className="btn btn-success" 
+                            onClick={createTeam}
+                            disabled={loading}
+                        >
+                            {loading ? 'Creating...' : 'Create Team'}
                         </button>
                     </div>
 

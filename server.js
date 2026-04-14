@@ -57,6 +57,16 @@ async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
+      
+      CREATE TABLE IF NOT EXISTS players (
+        id SERIAL PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        sports JSONB DEFAULT '[]',
+        sport_positions JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
     `);
     console.log('Database tables initialized successfully');
   } catch (err) {
@@ -121,7 +131,146 @@ app.put('/api/orders/:id/approve', async (req, res) => {
 
 // PUT - decline
 app.put('/api/orders/:id/decline', async (req, res) => {
+  t
+
+// ===== PLAYER ENDPOINTS =====
+
+// POST - register a new player
+app.post('/api/players', async (req, res) => {
   try {
+    const { fullName, email, sports, sportPositions } = req.body;
+    
+    if (!fullName || !email || !sports || sports.length === 0) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO players (full_name, email, sports, sport_positions) VALUES ($1, $2, $3, $4) RETURNING *',
+      [fullName, email, JSON.stringify(sports), JSON.stringify(sportPositions)]
+    );
+    
+    res.json({ success: true, player: result.rows[0] });
+  } catch (err) {
+    console.error('Error creating player:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET - all players
+app.get('/api/players', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM players ORDER BY created_at DESC');
+    const players = result.rows.map(row => ({
+      id: row.id,
+      fullName: row.full_name,
+      email: row.email,
+      sports: row.sports,
+      sportPositions: row.sport_positions,
+      createdAt: row.created_at
+    }));
+    res.json(players);
+  } catch (err) {
+    console.error('Error fetching players:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE - remove a player
+app.delete('/api/players/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM players WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting player:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ===== TEAMS ENDPOINTS =====
+
+// POST - create a new team
+app.post('/api/teams', async (req, res) => {
+  try {
+    const { teamName, sport, players } = req.body;
+    
+    if (!teamName || !sport || !players || players.length === 0) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO teams (name, members) VALUES ($1, $2) RETURNING id, name, members, created_at, updated_at',
+      [teamName, JSON.stringify({ sport, players })]
+    );
+    
+    const row = result.rows[0];
+    res.json({ 
+      success: true, 
+      team: {
+        id: row.id,
+        teamName: row.name,
+        ...row.members,
+        createdAt: row.created_at
+      }
+    });
+  } catch (err) {
+    console.error('Error creating team:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET - all teams
+app.get('/api/teams', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM teams ORDER BY created_at DESC');
+    const teams = result.rows.map(row => {
+      const members = row.members || {};
+      return {
+        id: row.id,
+        teamId: row.id,
+        teamName: row.name,
+        sport: members.sport,
+        players: members.players || [],
+        createdAt: row.created_at
+      };
+    });
+    res.json(teams);
+  } catch (err) {
+    console.error('Error fetching teams:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT - update a team (remove player)
+app.put('/api/teams/:id', async (req, res) => {
+  try {
+    const { players, sport } = req.body;
+    
+    const result = await pool.query(
+      'UPDATE teams SET members = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [JSON.stringify({ sport, players }), req.params.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Team not found' });
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating team:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE - remove a team
+app.delete('/api/teams/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM teams WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting team:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});ry {
     await pool.query(
       'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
       ['declined', req.params.id]
