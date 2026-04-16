@@ -11,7 +11,7 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://verntabase_user:R9lGnsXnYqaulsYEwrvA9lC1Q2aPccPP@dpg-d7f3t8kvikkc73dgbrh0-a.virginia-postgres.render.com/verntabase';
 
