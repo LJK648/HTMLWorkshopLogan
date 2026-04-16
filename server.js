@@ -2,8 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { Pool } = require('pg');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
 const PORT = process.env.PORT || 5000;
 
 // PostgreSQL connection (using Render database URL)
@@ -11,14 +18,18 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://verntabase_user:R
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Required for Render
+  ssl: { rejectUnauthorized: false }
 });
 
 app.use(cors());
 app.use(express.json());
-
-// Serve React build (needed for Render deployment)
 app.use(express.static(path.join(__dirname, 'build')));
+
+// Socket.io connection
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  socket.on('disconnect', () => console.log('Client disconnected:', socket.id));
+});
 
 // Initialize database tables
 async function initializeDatabase() {
@@ -74,7 +85,9 @@ async function initializeDatabase() {
   }
 }
 
-// POST - submit a new registration
+// ===== ORDER ENDPOINTS =====
+
+// POST - submit a new order
 app.post('/api/orders', async (req, res) => {
   try {
     const newOrder = {
@@ -88,6 +101,7 @@ app.post('/api/orders', async (req, res) => {
       [newOrder.id, newOrder.customerId, JSON.stringify(newOrder.items || []), newOrder.total || 0, newOrder.status]
     );
     
+    io.emit('orders_updated');
     res.json({ success: true, orderId: newOrder.id });
   } catch (err) {
     console.error('Error creating order:', err);
@@ -122,6 +136,7 @@ app.put('/api/orders/:id/approve', async (req, res) => {
       'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
       ['approved', req.params.id]
     );
+    io.emit('orders_updated');
     res.json({ success: true });
   } catch (err) {
     console.error('Error approving order:', err);
@@ -131,7 +146,18 @@ app.put('/api/orders/:id/approve', async (req, res) => {
 
 // PUT - decline
 app.put('/api/orders/:id/decline', async (req, res) => {
-  t
+  try {
+    await pool.query(
+      'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
+      ['declined', req.params.id]
+    );
+    io.emit('orders_updated');
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error declining order:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ===== PLAYER ENDPOINTS =====
 
@@ -149,6 +175,7 @@ app.post('/api/players', async (req, res) => {
       [fullName, email, JSON.stringify(sports), JSON.stringify(sportPositions)]
     );
     
+    io.emit('players_updated');
     res.json({ success: true, player: result.rows[0] });
   } catch (err) {
     console.error('Error creating player:', err);
@@ -179,6 +206,7 @@ app.get('/api/players', async (req, res) => {
 app.delete('/api/players/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM players WHERE id = $1', [req.params.id]);
+    io.emit('players_updated');
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting player:', err);
@@ -203,6 +231,7 @@ app.post('/api/teams', async (req, res) => {
     );
     
     const row = result.rows[0];
+    io.emit('teams_updated');
     res.json({ 
       success: true, 
       team: {
@@ -240,7 +269,7 @@ app.get('/api/teams', async (req, res) => {
   }
 });
 
-// PUT - update a team (remove player)
+// PUT - update a team
 app.put('/api/teams/:id', async (req, res) => {
   try {
     const { players, sport } = req.body;
@@ -254,6 +283,7 @@ app.put('/api/teams/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Team not found' });
     }
     
+    io.emit('teams_updated');
     res.json({ success: true });
   } catch (err) {
     console.error('Error updating team:', err);
@@ -265,19 +295,10 @@ app.put('/api/teams/:id', async (req, res) => {
 app.delete('/api/teams/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM teams WHERE id = $1', [req.params.id]);
+    io.emit('teams_updated');
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting team:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});ry {
-    await pool.query(
-      'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
-      ['declined', req.params.id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error declining order:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -290,14 +311,12 @@ app.get(/.*/, (req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
-    // Test database connection
     await pool.query('SELECT NOW()');
     console.log('✓ PostgreSQL connected successfully');
     
-    // Initialize tables
     await initializeDatabase();
     
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`✓ Vernball server running on port ${PORT}`);
       console.log(`✓ Database: PostgreSQL on Render`);
     });
