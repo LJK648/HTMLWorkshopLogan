@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vernball Games</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="WebProject.css">
+
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark">
+<div class="container">
+<a class="navbar-brand d-flex align-items-center" href="index.html">
+<img src="images/vernball-logo.JPG" alt="Vernball Logo" width="40" height="40" class="me-2">
+Vernball League
+</a>
+<div>
+<ul class="navbar-nav">
+<li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="register.html">Player Registration</a></li>
+<li class="nav-item"><a class="nav-link" href="hof.html">Hall of Fame</a></li>
+<li class="nav-item"><a class="nav-link active" href="games.html">Games</a></li>
+<li class="nav-item"><a class="nav-link" href="team-builder.html">Team Builder</a></li>
+<li class="nav-item"><a class="nav-link" href="teams-list.html">View Teams</a></li>
+</ul>
+</div>
+</div>
+</nav>
+
+<header class="page-header">
+<div class="container">
+<h1>Vernball Game Management</h1>
+<p>Create games, browse events, and manage signups.</p>
+</div>
+</header>
+
+<main class="container mt-5">
+
+<div class="row">
+<div class="col-lg-6">
+<h2>Add New Game</h2>
+<form id="gameForm">
+<div class="mb-3">
+<label class="form-label" for="gameName">Game Name</label>
+<input class="form-control" id="gameName" name="gameName" type="text" required>
+</div>
+<div class="mb-3">
+<label class="form-label" for="sport">Sport</label>
+<select class="form-select" id="sport" name="sport" required>
+<option value="Basketball">Basketball</option>
+<option value="Football">Football</option>
+<option value="Soccer">Soccer</option>
+<option value="Baseball">Baseball</option>
+</select>
+</div>
+<div class="mb-3">
+<label class="form-label" for="dateTime">Date & Time</label>
+<input class="form-control" id="dateTime" name="dateTime" type="datetime-local" required>
+</div>
+<div class="mb-3">
+<label class="form-label" for="location">Location</label>
+<input class="form-control" id="location" name="location" type="text" required>
+</div>
+<button class="btn btn-primary" type="submit">Create Game</button>
+</form>
+</div>
+<div class="col-lg-6">
+<h2>Registered Games</h2>
+<div class="mb-3">
+<label class="form-label" for="searchType">Search By:</label>
+<select class="form-select" id="searchType" name="searchType">
+<option value="all" selected>All Fields</option>
+<option value="name">Game Name</option>
+<option value="sport">Sport</option>
+<option value="player">Player Name</option>
+</select>
+</div>
+<div class="mb-3">
+<label class="form-label" for="gameSearch">Search Games</label>
+<input class="form-control" id="gameSearch" type="search" placeholder="Enter game name, sport, or player name">
+</div>
+<div id="gamesContainer"></div>
+</div>
+</div>
+</main>
+
+<footer class="footer">
+<div class="container text-center">
+<h5>Vernball Rec League</h5>
+<p>Building Community through recreation and competition.</p>
+<div class="footer-links">
+<a href="index.html">Home</a> |
+<a href="register.html">Player Registration</a> |
+<a href="hof.html">Hall of Fame</a> |
+<a href="games.html">Games</a> |
+<a href="team-builder.html">Team Builder</a> |
+<a href="teams-list.html">View Teams</a>
+</div>
+<p class="copyright">© 2026 Vernball Rec League | VERN LLC</p>
+</div>
+</footer>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="games.js"></script>
+</body>
+</html>
