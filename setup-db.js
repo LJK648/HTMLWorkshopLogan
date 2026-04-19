@@ -32,6 +32,10 @@ async function setupDatabase() {
         items JSONB DEFAULT '[]',
         total NUMERIC DEFAULT 0,
         status TEXT DEFAULT 'pending',
+        game_name TEXT,
+        sport TEXT,
+        date_time TIMESTAMP,
+        location TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );

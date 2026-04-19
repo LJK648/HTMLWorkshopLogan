@@ -38,6 +38,10 @@ async function initializeDatabase() {
         items JSONB DEFAULT '[]',
         total NUMERIC DEFAULT 0,
         status TEXT DEFAULT 'pending',
+        game_name TEXT,
+        sport TEXT,
+        date_time TIMESTAMP,
+        location TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
@@ -82,8 +86,8 @@ app.post('/api/orders', async (req, res) => {
   try {
     const newOrder = { id: 'VB-' + Date.now(), status: 'pending', ...req.body };
     await pool.query(
-      'INSERT INTO orders (id, customer_id, items, total, status) VALUES ($1, $2, $3, $4, $5)',
-      [newOrder.id, newOrder.customerId, JSON.stringify(newOrder.items || []), newOrder.total || 0, newOrder.status]
+      'INSERT INTO orders (id, customer_id, items, total, status, game_name, sport, date_time, location) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+      [newOrder.id, newOrder.customerId, JSON.stringify(newOrder.items || []), newOrder.total || 0, newOrder.status, newOrder.gameName, newOrder.sport, newOrder.dateTime, newOrder.location]
     );
     io.emit('orders_updated');
     res.json({ success: true, orderId: newOrder.id });
@@ -98,7 +102,8 @@ app.get('/api/orders', async (req, res) => {
     const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
     const orders = result.rows.map(row => ({
       id: row.id, customerId: row.customer_id, items: row.items,
-      total: row.total, status: row.status, createdAt: row.created_at, updatedAt: row.updated_at
+      total: row.total, status: row.status, createdAt: row.created_at, updatedAt: row.updated_at,
+      gameName: row.game_name, sport: row.sport, dateTime: row.date_time, location: row.location
     }));
     res.json(orders);
   } catch (err) {
