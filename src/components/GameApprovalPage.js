@@ -41,6 +41,15 @@ const GameApprovalPage = () => {
             .catch(err => console.error('Error declining game:', err));
     };
 
+    const deleteGame = (gameId) => {
+        if (window.confirm('Are you sure you want to delete this game? This action cannot be undone.')) {
+            fetch(`/api/orders/${gameId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => { if (data.success) showMessage('Game deleted successfully!', 'danger'); })
+                .catch(err => console.error('Error deleting game:', err));
+        }
+    };
+
     const showMessage = (msg, type = 'success') => {
         setMessage(msg); setMessageType(type);
         setTimeout(() => setMessage(''), 5000);
@@ -92,11 +101,22 @@ const GameApprovalPage = () => {
                                         {(game.status === 'pending' || !game.status) && (
                                             <>
                                                 <button className="btn btn-sm btn-success me-2" onClick={() => approveGame(game.id)}>Approve</button>
-                                                <button className="btn btn-sm btn-danger" onClick={() => declineGame(game.id)}>Decline</button>
+                                                <button className="btn btn-sm btn-danger me-2" onClick={() => declineGame(game.id)}>Decline</button>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => deleteGame(game.id)}>Delete</button>
                                             </>
                                         )}
-                                        {game.status === 'approved' && <span className="text-success fw-bold">✓ Approved</span>}
-                                        {game.status === 'declined' && <span className="text-danger fw-bold">✗ Declined</span>}
+                                        {game.status === 'approved' && (
+                                            <>
+                                                <span className="text-success fw-bold me-2">✓ Approved</span>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => deleteGame(game.id)}>Delete</button>
+                                            </>
+                                        )}
+                                        {game.status === 'declined' && (
+                                            <>
+                                                <span className="text-danger fw-bold me-2">✗ Declined</span>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => deleteGame(game.id)}>Delete</button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

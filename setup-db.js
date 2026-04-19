@@ -42,6 +42,35 @@ async function setupDatabase() {
     `);
     console.log('✓ orders table created');
     
+    // Add new columns if they don't exist (for existing databases)
+    try {
+      await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS game_name TEXT;`);
+      console.log('✓ game_name column added');
+    } catch (err) {
+      console.log('Note: game_name column may already exist');
+    }
+    
+    try {
+      await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS sport TEXT;`);
+      console.log('✓ sport column added');
+    } catch (err) {
+      console.log('Note: sport column may already exist');
+    }
+    
+    try {
+      await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS date_time TIMESTAMP;`);
+      console.log('✓ date_time column added');
+    } catch (err) {
+      console.log('Note: date_time column may already exist');
+    }
+    
+    try {
+      await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS location TEXT;`);
+      console.log('✓ location column added');
+    } catch (err) {
+      console.log('Note: location column may already exist');
+    }
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS games (
         id SERIAL PRIMARY KEY,

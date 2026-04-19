@@ -55,6 +55,15 @@ const Games = () => {
             .catch(err => { console.error('Error submitting game:', err); alert('Error submitting game.'); });
     };
 
+    const deleteGame = (gameId) => {
+        if (window.confirm('Are you sure you want to delete this approved game? This action cannot be undone.')) {
+            fetch(`/api/orders/${gameId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => { if (data.success) alert('Game deleted successfully!'); })
+                .catch(err => console.error('Error deleting game:', err));
+        }
+    };
+
     const formatDateTime = (value) => {
         if (!value) return 'N/A';
         try { return new Date(value).toLocaleString(); } catch { return value; }
@@ -124,7 +133,12 @@ const Games = () => {
                             filteredGames.map(game => (
                                 <div className="card mb-3" key={game.id}>
                                     <div className="card-body">
-                                        <h5 className="card-title">{game.gameName}</h5>
+                                        <div className="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 className="card-title mb-0">{game.gameName}</h5>
+                                            <button className="btn btn-sm btn-outline-danger" onClick={() => deleteGame(game.id)}>
+                                                Delete
+                                            </button>
+                                        </div>
                                         <p className="card-text"><strong>Sport:</strong> {game.sport}</p>
                                         <p className="card-text"><strong>Location:</strong> {game.location}</p>
                                         <p className="card-text"><strong>Date & Time:</strong> {formatDateTime(game.dateTime)}</p>

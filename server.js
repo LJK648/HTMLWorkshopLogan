@@ -131,6 +131,16 @@ app.put('/api/orders/:id/decline', async (req, res) => {
   }
 });
 
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM orders WHERE id = $1', [req.params.id]);
+    io.emit('orders_updated');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.post('/api/players', async (req, res) => {
   try {
     const { fullName, email, sports, sportPositions } = req.body;

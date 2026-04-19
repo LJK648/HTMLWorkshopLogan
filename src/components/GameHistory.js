@@ -40,6 +40,15 @@ const GameHistory = () => {
         }
     };
 
+    const deleteGame = (gameId) => {
+        if (window.confirm('Are you sure you want to delete this game? This action cannot be undone.')) {
+            fetch(`/api/orders/${gameId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => { if (data.success) alert('Game deleted successfully!'); })
+                .catch(err => console.error('Error deleting game:', err));
+        }
+    };
+
     return (
         <div>
             <header className="page-header">
@@ -74,9 +83,14 @@ const GameHistory = () => {
                                                 <p><strong>Date & Time:</strong> {game.dateTime ? new Date(game.dateTime).toLocaleString() : 'N/A'}</p>
                                             </div>
                                         </div>
-                                        <button className="btn btn-sm btn-outline-primary" onClick={() => setSelectedGame(selectedGame?.id === game.id ? null : game)}>
-                                            {selectedGame?.id === game.id ? 'Hide Details' : 'View Details'}
-                                        </button>
+                                        <div className="d-flex gap-2">
+                                            <button className="btn btn-sm btn-outline-primary" onClick={() => setSelectedGame(selectedGame?.id === game.id ? null : game)}>
+                                                {selectedGame?.id === game.id ? 'Hide Details' : 'View Details'}
+                                            </button>
+                                            <button className="btn btn-sm btn-outline-danger" onClick={() => deleteGame(game.id)}>
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                     {selectedGame?.id === game.id && (
                                         <div className="card-footer bg-light">
